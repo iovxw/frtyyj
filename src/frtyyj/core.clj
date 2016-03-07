@@ -5,8 +5,14 @@
             [clojure.tools.logging :as log])
   (:gen-class))
 
-(def code (char-array (str "\u200B\u200C\u200D\uFEFF\u202C\u2060\u2061\u2062"
-                           "\u2063\u2064\u206A\u206B\u206C\u206D\u206E\u206F")))
+(def code [\u200B \u200C \u200D \uFEFF \u2060 \u2061 \u2062 \u2063
+           \u2064 \u2069 \u206A \u206B \u206C \u206D \u206E \u206F])
+
+; For Telegram
+(defn str-encode [string]
+  (string/replace (esab16/str-encode string) \u202c \u2069))
+(defn str-decode [string]
+  (esab16/str-decode (string/replace string \u2069 \u202c)))
 
 (defn updates-seq
   ([bot] (updates-seq bot 0))
@@ -22,10 +28,10 @@
     (loop [msg msg, block nil, in-quote false]
       (case (first msg)
         \( (recur (next msg) nil true)
-        \) (do (.append buf (esab16/str-encode block))
+        \) (do (.append buf (str-encode block))
                       (recur (next msg) nil false))
         nil (do (when in-quote
-                  (.append buf (esab16/str-encode block)))
+                  (.append buf (str-encode block)))
                 (.toString buf)) ; DONE!
         ; default
         (do (if in-quote
@@ -37,15 +43,15 @@
   (let [buf (StringBuffer.)]
     (loop [msg msg, block nil, in-quote false]
       (case (first msg)
-        (\u200B \u200C \u200D \uFEFF \u202C \u2060 \u2061 \u2062
-         \u2063 \u2064 \u206A \u206B \u206C \u206D \u206E \u206F)
+        (\u200B \u200C \u200D \uFEFF \u2060 \u2061 \u2062 \u2063
+         \u2064 \u2069 \u206A \u206B \u206C \u206D \u206E \u206F)
         (recur (next msg) (str block (first msg)) true)
         nil (do (when in-quote
-                  (.append buf (format " (%s)" (esab16/str-decode block))))
+                  (.append buf (format " (%s)" (str-decode block))))
                 (.toString buf)) ; DONE!
         ; default
         (do (if in-quote
-              (do (.append buf (format " (%s) " (esab16/str-decode block)))
+              (do (.append buf (format " (%s) " (str-decode block)))
                   (.append buf (first msg))
                   (recur (next msg) nil false))
               (do (.append buf (first msg))
