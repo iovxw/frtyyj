@@ -1,4 +1,4 @@
-# iugytf
+# frtyyj
 
 需先在 [@BotFather](https://telegram.me/BotFather) 里将 Bot 的 `/setprivacy` 设置为 `Disable`，
 以及 `/setinline`
