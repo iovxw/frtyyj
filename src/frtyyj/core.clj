@@ -28,8 +28,9 @@
     (loop [msg msg, block nil, in-quote false]
       (case (first msg)
         \( (recur (next msg) nil true)
-        \) (do (.append buf (str-encode block))
-                      (recur (next msg) nil false))
+        \) (do (when block
+                 (.append buf (str-encode block)))
+               (recur (next msg) nil false))
         nil (do (when in-quote
                   (.append buf (str-encode block)))
                 (.toString buf)) ; DONE!
