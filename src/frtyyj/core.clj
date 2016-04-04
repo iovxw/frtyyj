@@ -78,8 +78,9 @@
       (println (first updates))
       (try
         (if-let [query ((first updates) :inline_query)]
-          (tgapi/answer-inline-query bot (query :id)
-                                     (gen-answer (query :query)))
+          (when-not (= (query :query) "")
+            (tgapi/answer-inline-query bot (query :id)
+                                       (gen-answer (query :query))))
           (if-let [message ((first updates) :message)]
             (if-let [r-message (message :reply_to_message)]
               (if (and (string/starts-with? (message :text) (str "@" (bot :username)))
