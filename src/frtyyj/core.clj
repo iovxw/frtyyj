@@ -82,11 +82,16 @@
           (when-not (= (query :query) "")
             (tgapi/answer-inline-query bot (query :id)
                                        (gen-answer (query :query))))
-          (if-let [message ((first updates) :message)]
-            (if-let [r-message (message :reply_to_message)]
-              (if (and (string/starts-with? (message :text) (str "@" (bot :username)))
-                       (is-encoded-msg (r-message :text)))
-                (tgapi/send-message bot ((message :chat) :id)
-                                    (decode-msg (r-message :text)))))))
+          (let [message ((first updates) :message)
+                text (get message :text)
+                r-message (get message :reply_to_message)
+                r-text (get r-message :text)]
+            (when (and message text r-message r-text)
+              (when (string/starts-with? text (str "@" (bot :username)))
+                (if (is-encoded-msg r-text)
+                  (tgapi/send-message bot (get-in message [:chat :id])
+                                      (decode-msg r-text))
+                  (tgapi/send-message bot (get-in message [:chat :id])
+                                      "消息内无已编码内容"))))))
         (catch Exception e (log/error e "")))
       (recur (rest updates)))))
